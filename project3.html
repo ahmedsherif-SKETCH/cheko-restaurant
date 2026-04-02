@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheko Restaurant</title>
+
+<style>
+  :root {
+    --primary: #05f5d9;
+    --secondary: #ffcc00;
+    --accent: #4ab6f5;
+    --bg-dark: #1B211A;
+    --card-bg: #222;
+  }
+
+  body {
+    text-align: center;
+    background: var(--bg-dark);
+    color: white;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  /* --- Animations --- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease-out;
+  }
+
+  .reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* --- Header & Nav --- */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%;
+    background: rgba(0, 0, 0, 0.9);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 2px solid var(--secondary);
+    backdrop-filter: blur(10px);
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+  }
+
+  nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+  }
+  
+  nav a:hover { color: var(--primary); }
+
+  /* --- Layout --- */
+  section { padding: 80px 20px; }
+  .container { max-width: 1100px; margin: auto; }
+
+  /* --- Grid & Cards --- */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover { 
+    transform: translateY(-10px); 
+    border-color: var(--primary);
+    box-shadow: 0 10px 20px rgba(5, 245, 217, 0.2);
+  }
+
+  .card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover; 
+    border-radius: 15px;
+    transition: 0.3s;
+  }
+  
+  .card:hover img { transform: scale(1.05); }
+
+  /* --- Floating Cart Button --- */
+  .cart-btn-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--primary);
+    color: black;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: 0.3s;
+  }
+
+  .cart-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    color: white;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 50%;
+  }
+
+  /* --- Popup Cart Sidebar --- */
+  .cart-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.3s;
+    z-index: 1001;
+    backdrop-filter: blur(5px);
+  }
+
+  .cart-popup {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 100%;
+    max-width: 380px;
+    height: 100%;
+    background: #111;
+    z-index: 1002;
+    transition: 0.4s ease-in-out;
+    padding: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+  }
+
+  .cart-popup.open { right: 0; }
+  .cart-overlay.active { visibility: visible; opacity: 1; }
+
+  #cart-items { 
+    list-style: none; 
+    padding: 0; 
+    overflow-y: auto; 
+    flex-grow: 1;
+    margin: 20px 0;
+  }
+
+  #cart-items li { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 12px 0; 
+    border-bottom: 1px solid #333;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  /* --- Buttons --- */
+  button {
+    background: var(--accent);
+    border: none;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover { background: white; transform: scale(1.05); }
+
+  .close-cart {
+    background: none;
+    color: white;
+    font-size: 24px;
+    text-align: right;
+    cursor: pointer;
+  }
+
+  footer { background: black; padding: 40px; margin-top: 40px; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2 style="color:var(--primary)">Cheko</h2>
+  <nav>
+    <ul>
+      <li><a href="#home">Home</a></li>
+      <li><a href="#location">Location</a></li>
+       <li><a href="#menu">Menu</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="cart-btn-float" onclick="toggleCart()">
+  🛒
+  <span class="cart-count" id="count-tag">0</span>
+</div>
+
+<div class="cart-overlay" id="overlay" onclick="toggleCart()"></div>
+<div class="cart-popup" id="popup">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Your Order</h2>
+    <span class="close-cart" onclick="toggleCart()">✕</span>
+  </div>
+  <hr style="width:100%; border: 0.5px solid #333;">
+  <ul id="cart-items">
+    </ul>
+  <h3 id="total">Total: 0 EGP</h3>
+  <button onclick="sendOrder()" style="width:100%; background:#25D366; color:white; font-size: 1.1rem;">
+    Confirm & Order (WhatsApp)
+  </button>
+</div>
+
+<section id="home" class="reveal">
+  <h1 style="font-size: 3.5rem;">سندوتشات شيكو</h1>
+  <h3 style="color:var(--accent)">احلى سندوتش في مصر🔥</h3>
+</section>
+
+<section id="location" class="reveal">
+  <h2>مكانا</h2>
+  <p>📍 إحنا موجودين على البحر مباشرة 🌊</p>
+  <a href="http://maps.google.com" target="_blank" style="color:var(--secondary); text-decoration: none; font-weight: bold;">دوس هنا لمعرفة الموقع</a>
+  <br><br>
+  <img src="d:\project\ChatGPT Image Mar 28, 2026, 03_46_58 AM.png" width="100%" style="max-width:700px; border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+</section>
+
+<div class="container">
+  <section id="menu" class="reveal">
+    <h2 style="font-size: 2.5rem; color: var(--primary);">Our Menu</h2>
+    <img src="d:\project\menu.jpeg" width="300" style="border-radius:15px; margin-bottom:40px; border: 2px solid var(--primary);">
+    
+    <div class="menu-grid">
+      <div class="card">
+        <h3>Smashed Burger</h3>
+        <p>100 EGP</p>
+        <img src="d:\project\OIP.webp">
+        <button onclick="addToCart('Smashed Burger', 100)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Shawerma</h3>
+        <p>60 EGP</p>
+        <img src="d:\project\Screenshot 2026-03-28 021018.png">
+        <button onclick="addToCart('Shawerma', 60)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Pizza</h3>
+        <p>90 EGP</p>
+        <img src="d:\project\grabbing-a-slice-of-pizza.webp">
+        <button onclick="addToCart('Pizza', 90)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Meat Shawerma</h3>
+        <p>70 EGP</p>
+        <img src="d:\project\1b388eae4d7782c19381f1fb9a90b546.jpg">
+        <button onclick="addToCart('Meat Shawerma', 70)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Half Chicken with Rice</h3>
+        <p>200 EGP</p>
+        <img src="d:\project\Screenshot 2026-03-28 045235.png">
+        <button onclick="addToCart('Half Chicken with Rice', 200)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Crispy Sandwich</h3>
+        <p>60 EGP</p>
+        <img src="d:\project\Screenshot 2026-03-28 045255.png">
+        <button onclick="addToCart('Crispy Sandwich', 60)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Combo offer</h3>
+        <p>40 EGP</p>
+        <img src="d:\project\24670.jpg">
+        <button onclick="addToCart('Combo Offer', 40)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Melted Cheese</h3>
+        <p>30 EGP</p>
+        <img src="d:\project\000.webp">
+        <button onclick="addToCart('Melted Cheese', 30)">Add to Cart</button>
+      </div>
+
+      <div class="card">
+        <h3>Cola</h3>
+        <p>20 EGP</p>
+        <img src="d:\project\cola.webp">
+        <button onclick="addToCart('Cola', 20)">Add to Cart</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section id="contact" class="reveal">
+  <div class="container">
+    <h2>Contact Us</h2>
+    <div style="background: #222; padding: 30px; border-radius: 20px; display: inline-block;">
+      <p>📧 Email: <b>chekorest@gmail.com</b></p>
+      <p>📞 Number: <b>0123456789</b></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Cheko Restaurant - Made with Freshness</p>
+</footer>
+
+<script>
+let cart = [];
+let total = 0;
+
+// Toggle Popup Cart
+function toggleCart() {
+  document.getElementById("popup").classList.toggle("open");
+  document.getElementById("overlay").classList.toggle("active");
+}
+
+function addToCart(name, price) {
+  cart.push({name, price});
+  total += price;
+  updateUI();
+  
+  // Quick bounce effect on floating button
+  const btn = document.querySelector('.cart-btn-float');
+  btn.style.transform = "scale(1.2)";
+  setTimeout(() => btn.style.transform = "scale(1)", 200);
+}
+
+function removeItem(index) {
+  total -= cart[index].price;
+  cart.splice(index, 1);
+  updateUI();
+}
+
+function updateUI() {
+  // Update Cart List
+  let cartList = document.getElementById("cart-items");
+  cartList.innerHTML = "";
+  cart.forEach((item, index) => {
+    let li = document.createElement("li");
+    li.innerHTML = `
+      <div style="text-align:left">
+        <strong>${item.name}</strong><br>
+        <small>${item.price} EGP</small>
+      </div>
+      <button onclick="removeItem(${index})" style="background:none; color:#ff4444; font-size:18px;">✕</button>
+    `;
+    cartList.appendChild(li);
+  });
+
+  // Update Totals and Badge
+  document.getElementById("total").textContent = "Total: " + total + " EGP";
+  document.getElementById("count-tag").textContent = cart.length;
+}
+
+function sendOrder() {
+  if(cart.length === 0) return alert("Your cart is empty!");
+  
+  let itemsSummary = cart.map(i => `- ${i.name} (${i.price} EGP)`).join("\n");
+  let msg = `*New Order from Cheko Website*\n\nItems:\n${itemsSummary}\n\n*Total: ${total} EGP*`;
+  
+  window.open(`https://wa.me/20123456789?text=${encodeURIComponent(msg)}`);
+}
+
+// Scroll Reveal Logic
+window.addEventListener('scroll', () => {
+  let reveals = document.querySelectorAll('.reveal');
+  reveals.forEach(reveal => {
+    let windowHeight = window.innerHeight;
+    let revealTop = reveal.getBoundingClientRect().top;
+    if (revealTop < windowHeight - 100) {
+      reveal.classList.add('active');
+    }
+  });
+});
+
+// Run once on load
+window.onload = () => {
+    document.querySelector('.reveal').classList.add('active');
+};
+</script>
+
+</body>
+</html>
