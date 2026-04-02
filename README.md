@@ -1,2 +1,0 @@
-# cheko-restaurant
-website
